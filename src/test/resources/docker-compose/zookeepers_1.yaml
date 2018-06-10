@@ -1,0 +1,16 @@
+version: "3"
+
+services:
+  zookeeper-1:
+    image: crossz/zookeeper-cluster-distributed
+    environment:
+      - "MYID=1"
+      - "SERVERS=zookeeper-1,zookeeper-2,zookeeper-3"
+      - "CLIENTPORT=2181"
+
+  zookeeper-2:
+    image: crossz/zookeeper-cluster-distributed
+    environment:
+      - "MYID=2"
+      - "SERVERS=zookeeper-1,zookeeper-2,zookeeper-3"
+      - "CLIENTPORT=2181"

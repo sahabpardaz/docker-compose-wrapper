@@ -1,0 +1,3 @@
+alpine:
+  image: alpine:3.5
+  command: /bin/sh -c "while true; do sleep 5; done;"

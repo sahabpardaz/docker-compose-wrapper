@@ -1,0 +1,5 @@
+version: "3"
+
+services:
+  zookeeper:
+    image: jplock/zookeeper:3.4.10
