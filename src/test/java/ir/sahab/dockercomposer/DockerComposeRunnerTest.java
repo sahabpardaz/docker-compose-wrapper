@@ -4,43 +4,41 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.assertj.core.api.Condition;
 import org.junit.Assert;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.zeroturnaround.exec.ProcessExecutor;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
-import java.util.concurrent.TimeoutException;
 
 public class DockerComposeRunnerTest {
 
     private static final int PORT = 2181;
     private static final Condition<Service> accessible = new ServiceAccessible(PORT);
 
-
-    @ClassRule
-    public static DockerCompose dockerCompose = DockerCompose.builder()
-            .file("/docker-compose/jGroup.yml")
-            .afterStart(WaitFor.portOpen("jGroup", 4444))
-            .forceRecreate()
-            .projectName("jGroup_test")
-            .build();
-
-    Service jGroupService = dockerCompose.getServiceByName("jGroup");
-
     @Test
-    public void testServiceWithInjectedUserId() throws InterruptedException, TimeoutException, IOException {
+    public void testServiceWithInjectedUserId() throws Exception {
+        // Start the zookeeper service with injected uid
+
+        Path file = Paths.get(getClass().getResource("/docker-compose/j-group-with-uid.yaml").getFile());
+        DockerComposeRunner runner = new DockerComposeRunner(file);
+        Map<String, Service> services = runner.start(true);
+        Service jGroupService = services.get("jgroup-with-uid");
+
+        WaitFor.portOpen("jgroup-with-uid", PORT).process(services);
         assertThat(jGroupService).isNotNull();
         String containerId = jGroupService.getId();
-        System.out.println("containerId: " + containerId);
+        //Get user id in machine
+
         ProcessExecutor executor = new ProcessExecutor("id", "-u");
         String expectedUserId = executor.readOutput(true).execute().outputString().trim();
+        //Get user id inside the container
+
         executor = new ProcessExecutor("docker", "exec", containerId, "id", "-u");
         String containerUserId = executor.readOutput(true).execute().outputString().trim();
         Assert.assertEquals(expectedUserId, containerUserId);
-        jGroupService.stop();
+
+        runner.down();
     }
 
     @Test

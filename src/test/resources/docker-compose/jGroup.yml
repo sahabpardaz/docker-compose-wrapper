@@ -1,7 +1,0 @@
-version: '3'
-services:
-  jGroup:
-    image: belaban/jgroups
-    user: "${CURRENT_USER_ID}"
-    command: ["bash", "-c", "nc -k -l 4444 > filename.out"]
-    
