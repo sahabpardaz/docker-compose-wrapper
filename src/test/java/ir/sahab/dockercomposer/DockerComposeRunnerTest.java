@@ -39,13 +39,10 @@ public class DockerComposeRunnerTest {
             executor = new ProcessExecutor("docker", "exec", containerId, "id", "-u");
             String containerUserId = executor.readOutput(true).execute().outputString().trim();
             Assert.assertEquals(expectedUserId, containerUserId);
-        }
-        catch (Exception ex){
-            throw ex;
-        }
-        finally {
-            if(runner != null)
+        } finally {
+            if(runner != null) {
                 runner.down();
+            }
         }
     }
 
