@@ -192,11 +192,13 @@ public class DockerComposeRunner {
             enhancedCmds.add("-p");
             enhancedCmds.add(projectName);
         }
+        //Get current user id from linux host
+        String uid = execute("id", "-u").outputString().trim();
         enhancedCmds.addAll(Arrays.asList(commands));
-
         ProcessExecutor executor =
             new ProcessExecutor()
-                .environment("DIRECTORY", composeFile.getParent().toString());
+                .environment("DIRECTORY", composeFile.getParent().toString())
+                .environment("CURRENT_USER_ID", uid);
         return execute(executor, enhancedCmds);
     }
 

@@ -3,6 +3,7 @@ package ir.sahab.dockercomposer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.assertj.core.api.Condition;
+import org.junit.Assert;
 import org.junit.Test;
 import org.zeroturnaround.exec.ProcessExecutor;
 
@@ -14,6 +15,36 @@ public class DockerComposeRunnerTest {
 
     private static final int PORT = 2181;
     private static final Condition<Service> accessible = new ServiceAccessible(PORT);
+
+    @Test
+    public void testServiceWithInjectedUserId() throws Exception {
+        DockerComposeRunner runner = null;
+        try {
+            // Start the zookeeper service with injected uid
+
+            Path file = Paths.get(getClass().getResource("/docker-compose/j-group-with-uid.yaml").getFile());
+            runner = new DockerComposeRunner(file);
+            Map<String, Service> services = runner.start(true);
+            Service jGroupService = services.get("jgroup-with-uid");
+
+            WaitFor.portOpen("jgroup-with-uid", PORT).process(services);
+            assertThat(jGroupService).isNotNull();
+            String containerId = jGroupService.getId();
+            //Get user id in machine
+
+            ProcessExecutor executor = new ProcessExecutor("id", "-u");
+            String expectedUserId = executor.readOutput(true).execute().outputString().trim();
+            //Get user id inside the container
+
+            executor = new ProcessExecutor("docker", "exec", containerId, "id", "-u");
+            String containerUserId = executor.readOutput(true).execute().outputString().trim();
+            Assert.assertEquals(expectedUserId, containerUserId);
+        } finally {
+            if(runner != null) {
+                runner.down();
+            }
+        }
+    }
 
     @Test
     public void testCreate() throws Exception {
