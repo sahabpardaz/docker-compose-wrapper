@@ -7,7 +7,6 @@ services:
 
 env:
   - DOCKER_COMPOSE_VERSION=1.18.0
-  - CURRENT_USER_ID=1001
 
 before_install:
   - sudo rm /usr/local/bin/docker-compose
