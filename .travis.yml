@@ -15,5 +15,5 @@ before_install:
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
 
-before_script:
-  - docker-compose -f src/test/resources/docker-compose/j-group-with-uid.yaml up
+after_failure:
+  - sudo docker logs dockercompose_jgroup-with-uid_1
