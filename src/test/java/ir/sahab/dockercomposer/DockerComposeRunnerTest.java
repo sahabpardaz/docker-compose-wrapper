@@ -41,7 +41,7 @@ public class DockerComposeRunnerTest {
             Assert.assertEquals(expectedUserId, containerUserId);
         } finally {
             if(runner != null) {
-                runner.down();
+//                runner.down();
             }
         }
     }
