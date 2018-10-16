@@ -1,4 +1,6 @@
-﻿# Docker-Compose Test Utility
+﻿Docker-Compose Test Utility
+===========================
+[![Build Status](https://travis-ci.org/sahabpardaz/docker-compose-wrapper.svg?branch=master)](https://travis-ci.org/sahabpardaz/docker-compose-wrapper)
 
 ### Introduction
 
@@ -13,7 +15,7 @@ In order to use this tool in your Java project, you need to have the following s
 - The Docker configured to run without `sudo` access
 
 ### Some Considerations
-1. Containers started by this rule are likely to stay alive in your system until explicitly killed by yourself. Therefore, you will need some bookkeeping to clean your environment regularly using `docker kill $(docker ps -q) && docker rm $(docker ps -q -a)`. 
+1. Containers started by this rule are likely to stay alive in your system until explicitly killed by yourself. Therefore, you will need some bookkeeping to clean your environment regularly using `docker kill $(docker ps -q) && docker rm $(docker ps -q -a)`.
 (Warn: This command will also kill and remove other containers. Be careful!)
 
 2. By default, there is no guarantee that the container is not used before by some tests. If you want a fresh container in your test, you can use `forceRecreate` param in your builder.
@@ -36,7 +38,7 @@ DockerCompose dockerCompose = DockerCompose.builder()
         .afterStart(WaitFor.portOpen("s1")) // Wait until services in this stage complete
         .file("/s2.yaml")                   // Stage 2
         .build()
-```   
+```
 9. While creating each Service, we add a DNS mapping to current JVM to map service name to internal IP of its container. So, the user can access container's network by `Service.getName()` as a hostname. So, the user does not have to set mappings of desired port to local machine and can access any port inside the container.
 For those use-cases that need to access container's hostname (e.g. HBase), they need to set hostname in the docker-compose YAML file and need to set it equal to service name.
 
@@ -49,26 +51,26 @@ Find or build an appropriate docker image for zookeeper. This image must be in y
 Write a docker-compose file say zookeeper.yaml with a service named zookeeper with the above image and publish zookeeper client port which is 2181. Put this file somewhere under your test resources directory. To test this file you can go to the location of this file and run "docker-compose -f zookeeper.yaml up". This command must bring your zookeeper container up so running "docker ps" must list this container with its published port 2181.
 The YAML file `zookeeper.yaml` can be like below:
 ```yaml
-version: "3"  
-services:  
- zookeeper: 
+version: "3"
+services:
+ zookeeper:
 	 image: zookeeper:latest
 ```
 A sample code to show how to add this rule to your test:
-```java       
+```java
 @ClassRule
 static DockerCompose dockerCompose =
 	DockerCompose.builder()
 	.file("/zookeeper.yaml")
 	.afterStart(WaitFor.portOpen("zookeeper", 2181))
 	.build();
-```   
+```
 In your test, you can get the service address this way:
 ```java
 Service zkService = dockerCompose.getServiceByName("zookeeper");
 String ip = zkService.getInternalIp();
 String port = zkService.getPort(2181);
-```      
+```
 OR this way:
 ```java
 String hostname = zkService.getName();
