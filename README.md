@@ -53,8 +53,8 @@ The YAML file `zookeeper.yaml` can be like below:
 ```yaml
 version: "3"
 services:
- zookeeper:
-	 image: zookeeper:latest
+  zookeeper:
+    image: zookeeper:latest
 ```
 A sample code to show how to add this rule to your test:
 ```java
