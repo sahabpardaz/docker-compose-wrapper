@@ -5,8 +5,8 @@
 
 
     <modelVersion>4.0.0</modelVersion>
-    <groupId>ir.sahab.neor</groupId>
-    <version>1.0-SNAPSHOT</version>
+    <groupId>ir.sahab</groupId>
+    <version>1.0.0</version>
     <artifactId>docker-compose-wrapper</artifactId>
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -19,6 +19,20 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.5.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
@@ -70,5 +84,11 @@
         </dependency>
 
     </dependencies>
-
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 </project>

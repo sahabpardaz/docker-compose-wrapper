@@ -53,8 +53,8 @@ The YAML file `zookeeper.yaml` can be like below:
 ```yaml
 version: "3"
 services:
- zookeeper:
-	 image: zookeeper:latest
+  zookeeper:
+    image: zookeeper:latest
 ```
 A sample code to show how to add this rule to your test:
 ```java
@@ -76,3 +76,6 @@ OR this way:
 String hostname = zkService.getName();
 String port = "2181";
  ```
+## Add it to your project
+You can reference to this library by either of java build systems (Maven, Gradle, SBT or Leiningen) using snippets from this jitpack link:
+[![](https://jitpack.io/v/sahabpardaz/docker-compose-wrapper.svg)](https://jitpack.io/#sahabpardaz/docker-compose-wrapper)

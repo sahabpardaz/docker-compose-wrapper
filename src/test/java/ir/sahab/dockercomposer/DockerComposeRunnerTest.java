@@ -21,8 +21,8 @@ public class DockerComposeRunnerTest {
         DockerComposeRunner runner = null;
         try {
             // Start the zookeeper service with injected uid
-
-            Path file = Paths.get(getClass().getResource("/docker-compose/j-group-with-uid.yaml").getFile());
+            Path file = Paths
+                    .get(getClass().getResource("/docker-compose/j-group-with-uid.yaml").getFile());
             runner = new DockerComposeRunner(file);
             Map<String, Service> services = runner.start(true);
             Service jGroupService = services.get("jgroup-with-uid");
@@ -30,11 +30,11 @@ public class DockerComposeRunnerTest {
             WaitFor.portOpen("jgroup-with-uid", PORT).process(services);
             assertThat(jGroupService).isNotNull();
             String containerId = jGroupService.getId();
-            //Get user id in machine
+            // Get user id in machine
 
             ProcessExecutor executor = new ProcessExecutor("id", "-u");
             String expectedUserId = executor.readOutput(true).execute().outputString().trim();
-            //Get user id inside the container
+            // Get user id inside the container
 
             executor = new ProcessExecutor("docker", "exec", containerId, "id", "-u");
             String containerUserId = executor.readOutput(true).execute().outputString().trim();
