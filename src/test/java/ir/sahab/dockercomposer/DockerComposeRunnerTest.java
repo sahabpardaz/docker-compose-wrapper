@@ -2,19 +2,39 @@ package ir.sahab.dockercomposer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.Map;
 import org.assertj.core.api.Condition;
 import org.junit.Assert;
 import org.junit.Test;
 import org.zeroturnaround.exec.ProcessExecutor;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Map;
-
 public class DockerComposeRunnerTest {
 
     private static final int PORT = 2181;
     private static final Condition<Service> accessible = new ServiceAccessible(PORT);
+
+    @Test
+    public void testEnvironment() throws Exception {
+        Path file = Paths
+                .get(getClass().getResource("/docker-compose/alpine-with-env.yaml").getFile());
+
+        String version = "3.12.0";
+        DockerComposeRunner runner = null;
+        try {
+            runner = new DockerComposeRunner(file, null, Collections.singletonMap("ALPINE_VERSION", version));
+            Map<String, Service> services = runner.start(true);
+            String image = getContainerInfo(services.get("alpine-with-env"), "Config.Image");
+            assertThat(image).isEqualTo("alpine:" + version);
+        } finally {
+            if (runner != null) {
+                runner.down();
+            }
+        }
+
+    }
 
     @Test
     public void testServiceWithInjectedUserId() throws Exception {
@@ -58,22 +78,22 @@ public class DockerComposeRunnerTest {
         WaitFor.portOpen("zookeeper", PORT).process(services);
         assertThat(zkService).is(accessible);
 
-        String currentId = getFullId(zkService);
+        String currentId = getContainerInfo(zkService, "Id");
         // Run the zookeeper file again, first without force start and check whether the
         // currentId is changed or not
         zkService = runner.start(false).get("zookeeper");
-        assertThat(currentId).isEqualTo(getFullId(zkService));
+        assertThat(currentId).isEqualTo(getContainerInfo(zkService, "Id"));
 
         // Now run with forceRecreate, the id must be changed this time but
         // the zkService must remain accessible
         zkService = runner.start(true).get("zookeeper");
-        String newId = getFullId(zkService);
+        String newId = getContainerInfo(zkService, "Id");
         assertThat(currentId).isNotEqualTo(newId);
 
         // Now check for different project name
-        runner = new DockerComposeRunner(file, "prj");
+        runner = new DockerComposeRunner(file, "prj", Collections.emptyMap());
         zkService = runner.start(false).get("zookeeper");
-        assertThat(currentId).isNotEqualTo(getFullId(zkService));
+        assertThat(currentId).isNotEqualTo(getContainerInfo(zkService, "Id"));
 
         // Test down
         try {
@@ -84,12 +104,13 @@ public class DockerComposeRunnerTest {
         assertThat(zkService).isNot(accessible);
     }
 
-    private String getFullId(Service container) throws Exception {
+    private String getContainerInfo(Service container, String name) throws Exception {
         return new ProcessExecutor()
-                .command("docker", "inspect",  "--format=\"{{.Id}}\"", container.getId())
+                .command("docker", "inspect",  String.format("--format={{.%s}}", name), container.getId())
                 .readOutput(true)
                 .execute()
-                .outputString();
+                .outputString()
+                .trim();
 
     }
 
