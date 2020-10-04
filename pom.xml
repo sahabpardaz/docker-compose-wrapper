@@ -6,7 +6,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>ir.sahab</groupId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <artifactId>docker-compose-wrapper</artifactId>
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>

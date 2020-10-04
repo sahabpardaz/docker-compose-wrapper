@@ -1,0 +1,8 @@
+version: "3"
+
+services:
+  alpine-with-env:
+    image: alpine:${ALPINE_VERSION}
+    command: ["sh", "-c", "while true; do sleep 5; done;"]
+    volumes:
+      -  /tmp/alpine-version:/tmp/alpine-version

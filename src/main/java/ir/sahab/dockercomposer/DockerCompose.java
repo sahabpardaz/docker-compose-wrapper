@@ -32,7 +32,7 @@ public class DockerCompose extends ExternalResource {
     private DockerCompose(List<DockerComposeSpec> specs) {
         this.specs = specs;
         // Create runner for each spec
-        specs.forEach(spec -> spec.runner = new DockerComposeRunner(spec.file, spec.projectName));
+        specs.forEach(spec -> spec.runner = new DockerComposeRunner(spec.file, spec.projectName, spec.environment));
         this.servicesByName = new HashMap<>();
     }
 
@@ -118,6 +118,7 @@ public class DockerCompose extends ExternalResource {
         boolean forceDown = false;
         List<StartupCallback> startupCallbacks = new ArrayList<>();
         DockerComposeRunner runner; //  Runner of this spec
+        Map<String, String> environment = new HashMap<>();
     }
 
     /**
@@ -250,6 +251,16 @@ public class DockerCompose extends ExternalResource {
          */
         public BuilderStage file(String resourcePath) {
             return builder.file(resourcePath);
+        }
+
+        /**
+         * Adds given environment variable to created docker-compose process.
+         * @param name name of the variable to add.
+         * @param value value of the added variable.
+         */
+        public BuilderStage environment(String name, String value) {
+            spec.environment.put(name, value);
+            return this;
         }
 
         /**

@@ -1,6 +1,7 @@
 package ir.sahab.dockercomposer;
 
 
+import java.util.Collections;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,30 +47,34 @@ public class DockerComposeRunner {
 
     private final Path composeFile;
     private final String projectName;
+    private final Map<String, String> environment;
 
     /**
      * Creates a runner for the given file with the default project name
      */
     public DockerComposeRunner(Path composeFile) {
-        this(composeFile, null);
+        this(composeFile, null, Collections.emptyMap());
     }
 
     /**
      * Creates a runner for the given file and with the given project name
      * @param composeFile the path to the compose file, required.
      * @param projectName the project name, optional.
+     * @param environment environment variables to pass to docker-compose process.
      */
-    public DockerComposeRunner(Path composeFile, String projectName) {
+    public DockerComposeRunner(Path composeFile, String projectName, Map<String, String> environment) {
         Validate.notNull(composeFile);
+        Validate.notNull(environment);
 
         this.composeFile = composeFile;
         this.projectName = projectName;
+        this.environment = environment;
     }
 
     /**
      * Starts the services and returns a map from the name of these services to their actual object.
      */
-    public Map<String, Service> start(boolean forceRecreate) throws Exception {
+    public Map<String, Service> start(boolean forceRecreate) {
         Map<String, Service> servicesByName = new HashMap<>();
         // Run the docker-compose files and get the list of its defined services
         List<String> serviceNames = up(forceRecreate);
@@ -197,6 +202,7 @@ public class DockerComposeRunner {
         enhancedCmds.addAll(Arrays.asList(commands));
         ProcessExecutor executor =
             new ProcessExecutor()
+                .environment(environment)
                 .environment("DIRECTORY", composeFile.getParent().toString())
                 .environment("CURRENT_USER_ID", uid);
         return execute(executor, enhancedCmds);
