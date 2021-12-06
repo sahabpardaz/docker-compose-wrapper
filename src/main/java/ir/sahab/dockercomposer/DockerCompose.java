@@ -1,8 +1,8 @@
 package ir.sahab.dockercomposer;
 
+import java.io.File;
 import java.net.URL;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -170,8 +170,7 @@ public class DockerCompose extends ExternalResource {
             Validate.isTrue("file".equals(composeFileUrl.getProtocol()),
                     "Only exploded archives are accepted but the given %s is accessible"
                             + " with %s protocol.", resourcePath, composeFileUrl.getProtocol());
-
-            return Paths.get(composeFileUrl.getFile());
+            return new File(composeFileUrl.getFile()).toPath();
         }
 
         DockerCompose build() {
