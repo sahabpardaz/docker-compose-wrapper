@@ -18,8 +18,7 @@ public class DockerComposeRunnerTest {
 
     @Test
     public void testEnvironment() throws Exception {
-        Path file = Paths
-                .get(getClass().getResource("/docker-compose/alpine-with-env.yaml").getFile());
+        Path file = Paths.get(getClass().getResource("/docker-compose/alpine-with-env.yaml").getFile());
 
         String version = "3.12.0";
         DockerComposeRunner runner = null;
@@ -60,7 +59,7 @@ public class DockerComposeRunnerTest {
             String containerUserId = executor.readOutput(true).execute().outputString().trim();
             Assert.assertEquals(expectedUserId, containerUserId);
         } finally {
-            if(runner != null) {
+            if (runner != null) {
                 runner.down();
             }
         }
@@ -106,12 +105,11 @@ public class DockerComposeRunnerTest {
 
     private String getContainerInfo(Service container, String name) throws Exception {
         return new ProcessExecutor()
-                .command("docker", "inspect",  String.format("--format={{.%s}}", name), container.getId())
+                .command("docker", "inspect", String.format("--format={{.%s}}", name), container.getId())
                 .readOutput(true)
                 .execute()
                 .outputString()
                 .trim();
 
     }
-
 }

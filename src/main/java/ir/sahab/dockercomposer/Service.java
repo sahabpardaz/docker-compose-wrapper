@@ -1,29 +1,28 @@
 package ir.sahab.dockercomposer;
 
-import org.apache.commons.lang3.Validate;
-
 import java.util.Map;
+import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * Represents a docker-compose service which actually corresponds to a docker container (running or
- * dead). Generally, a docker container can be accessed from an IP address with some
- * published ports. Since some containers might use port-forwarding this class holds a mapping
- * between internal ports to external ports but depending on your docker networking you might not
- * need such mappings. Since most containers only publish one port, the first point designated as
- * the default port of this container.
- * On the other hand, each container will have an IP in the internal network of docker, which is
- * accessible from the host machine. So the internal IP of the container is also set in this class,
- * which enables the user to access all internal ports of the container. Consequently, <b>if the
- * user access internal IP, port mapping will not be necessary anymore</b>.
+ * Represents a docker-compose service which actually corresponds to a docker container (running or dead). Generally, a
+ * docker container can be accessed from an IP address with some published ports. Since some containers might use
+ * port-forwarding this class holds a mapping between internal ports to external ports but depending on your docker
+ * networking you might not need such mappings. Since most containers only publish one port, the first point designated
+ * as the default port of this container. On the other hand, each container will have an IP in the internal network of
+ * docker, which is accessible from the host machine. So the internal IP of the container is also set in this class,
+ * which enables the user to access all internal ports of the container. Consequently, <b>if the user access internal
+ * IP, port mapping will not be necessary anymore</b>.
  */
 public class Service {
+
     private final String id;  // Container id
     private final String name;  // Service name
     private String externalIp;
     private String internalIp;
     private Map<Integer, Integer> portMappings;
     // Docker-compose runner that is responsible for running this service
-    private DockerComposeRunner runner;
+    private final DockerComposeRunner runner;
 
     /**
      * @param id container id
@@ -31,7 +30,6 @@ public class Service {
      * @param internalIp Ip of the container inside the docker network.
      * @param externalIp Ip of the existing machine.
      * @param portMappings mappings from internal ports to external ports, can be null.
-     *
      */
     Service(String id, String name, String externalIp, String internalIp,
             Map<Integer, Integer> portMappings, DockerComposeRunner runner) {
@@ -50,8 +48,7 @@ public class Service {
     }
 
     /**
-     * Starts this service by calling docker-compose start. Starting an already started service
-     * has no effect.
+     * Starts this service by calling docker-compose start. Starting an already started service has no effect.
      */
     public void start() {
         Service newService = runner.startService(name);
@@ -59,8 +56,7 @@ public class Service {
     }
 
     /**
-     * Stops this service by calling docker-compose stop. Stopping an already stopped service has
-     * no effect.
+     * Stops this service by calling docker-compose stop. Stopping an already stopped service has no effect.
      */
     public void stop() {
         runner.stopService(name);
@@ -81,7 +77,6 @@ public class Service {
     }
 
     /**
-     *
      * Returns the docker externalIp
      */
     public String getExternalIp() {
@@ -89,7 +84,6 @@ public class Service {
     }
 
     /**
-     *
      * Returns the docker internalIP
      */
     public String getInternalIp() {
@@ -97,13 +91,11 @@ public class Service {
     }
 
     /**
-     * Returns the external mapping of the given internal port. If no such mapping is found, the
-     * internal port is returned since in some docker networks internal ports are actually
-     * reachable.
+     * Returns the external mapping of the given internal port. If no such mapping is found, the internal port is
+     * returned since in some docker networks internal ports are actually reachable.
      */
     public int getPort(int internalPort) {
-        return portMappings == null ? internalPort :
-               portMappings.getOrDefault(internalPort, internalPort);
+        return portMappings == null ? internalPort : portMappings.getOrDefault(internalPort, internalPort);
     }
 
     // Used for changing this service state during its restart
@@ -113,4 +105,15 @@ public class Service {
         this.portMappings = other.portMappings;
     }
 
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("id", id)
+                .append("name", name)
+                .append("externalIp", externalIp)
+                .append("internalIp", internalIp)
+                .append("portMappings", portMappings)
+                .append("runner", runner)
+                .toString();
+    }
 }
