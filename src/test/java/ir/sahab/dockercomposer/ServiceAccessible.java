@@ -1,10 +1,9 @@
 package ir.sahab.dockercomposer;
 
-import org.assertj.core.api.Condition;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import org.assertj.core.api.Condition;
 
 /**
  * Checks whether a container is accessible from its default port.
@@ -24,12 +23,10 @@ public class ServiceAccessible extends Condition<Service> {
     @Override
     public boolean matches(Service container) {
         try (Socket socket = new Socket()) {
-            socket.connect(new InetSocketAddress(container.getInternalIp(), port),
-                           CONNECT_TIMEOUT_IN_MILLIS);
+            socket.connect(new InetSocketAddress(container.getInternalIp(), port), CONNECT_TIMEOUT_IN_MILLIS);
             return true;
         } catch (IOException e) {
             return false;
         }
     }
-
 }

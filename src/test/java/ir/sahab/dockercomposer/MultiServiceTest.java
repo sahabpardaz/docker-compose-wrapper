@@ -2,18 +2,18 @@ package ir.sahab.dockercomposer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import org.assertj.core.api.Condition;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.util.List;
-
 /**
- * This test brings an ensemble consists of three zookeepers. This is done by defining
- * a DockerCompose rule as a field annotated @ClassRule. So in test methods, we expect that the rule
- * is applied and the corresponding service is up and and running.
+ * This test brings an ensemble consists of three zookeepers. This is done by defining a DockerCompose rule as a field
+ * annotated @ClassRule. So in test methods, we expect that the rule is applied and the corresponding service is up and
+ * and running.
  */
 public class MultiServiceTest {
+
     private static final int PORT = 2181;
     private static final Condition<Service> accessible = new ServiceAccessible(PORT);
 
@@ -29,13 +29,13 @@ public class MultiServiceTest {
             .build();
 
     @Test
-    public void testServicesState() throws Exception {
+    public void testServicesState() {
         // Assuming the above rule is correctly applied (started) the services now must be available
         List<Service> services = dockerCompose.getServicesByNamePrefix("zookeeper");
         // Check there are three services
         assertThat(services).hasSize(3);
         // Order is not guaranteed by docker-compose (unless depends_on is used)
-        assertThat(services.stream().map(ep -> ep.getName()))
+        assertThat(services.stream().map(Service::getName))
                 .containsExactlyInAnyOrder("zookeeper-1", "zookeeper-2", "zookeeper-3");
         assertThat(dockerCompose.getAllServices()).isEqualTo(services);
         // Check all services are available
@@ -43,5 +43,4 @@ public class MultiServiceTest {
             assertThat(service).is(accessible);
         }
     }
-
 }

@@ -7,11 +7,12 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 /**
- * This test brings a single zookeeper instance and start working with it. This is done by defining
- * a DockerCompose rule as a field annotated @ClassRule. So in test methods, we expect that the rule
- * is applied and the corresponding service is up and and running.
+ * This test brings a single zookeeper instance and start working with it. This is done by defining a DockerCompose rule
+ * as a field annotated {@link ClassRule}. So in test methods, we expect that the rule is applied and the corresponding
+ * service is up and running.
  */
 public class SingleServiceTest {
+
     private static final int PORT = 2181;
     private static final Condition<Service> accessible = new ServiceAccessible(PORT);
 
@@ -65,5 +66,4 @@ public class SingleServiceTest {
         // Test start again
         zkService.start();
     }
-
 }
