@@ -79,7 +79,7 @@ public class NameServiceEditor {
          */
         private InetAddress[] lookupAllHostAddr(String paramString) throws UnknownHostException {
             if (address.getHostName().equals(paramString)) {
-                return new InetAddress[] { address };
+                return new InetAddress[] {address};
             } else {
                 throw new UnknownHostException();
             }

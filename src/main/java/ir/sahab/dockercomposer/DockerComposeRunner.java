@@ -242,7 +242,7 @@ public class DockerComposeRunner {
      * Gets container IP using "{@code docker inspect}" command and container name.
      *
      * @return The IP can be found in the json output of "docker inspect" command expected to be in node
-     *      {{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}
+     *      {{range* .NetworkSettings.Networks}}{{.IPAddress}}{{end}}
      */
     private String getContainerIp(String containerId) {
         ProcessResult result = execute("docker", "inspect", "-f",
