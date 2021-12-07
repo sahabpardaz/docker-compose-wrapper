@@ -1,15 +1,13 @@
 package ir.sahab.dockercomposer;
 
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.concurrent.TimeoutException;
 
 public class NameServiceEditorTest {
 
@@ -24,8 +22,7 @@ public class NameServiceEditorTest {
             .build();
 
     @Test
-    public void testHostnameAddAndRemove()
-            throws InterruptedException, TimeoutException, IOException, IllegalAccessException {
+    public void testHostnameAddAndRemove() throws IOException {
         Service service = dockerCompose.getServiceByName("alpine");
         String ip = service.getInternalIp();
         String hostname = service.getName();
@@ -49,7 +46,7 @@ public class NameServiceEditorTest {
                 return false;
             }
         } catch (UnknownHostException e) {
-            logger.info("unknown host");
+            logger.info("unknown host name: {}", hostname, e);
             return false;
         }
     }

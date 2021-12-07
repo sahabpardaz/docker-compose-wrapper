@@ -18,8 +18,7 @@ public class DockerComposeRunnerTest {
 
     @Test
     public void testEnvironment() throws Exception {
-        Path file = Paths
-                .get(getClass().getResource("/docker-compose/alpine-with-env.yaml").getFile());
+        Path file = Paths.get(getClass().getResource("/docker-compose/alpine-with-env.yaml").getFile());
 
         String version = "3.12.0";
         DockerComposeRunner runner = null;
@@ -46,21 +45,20 @@ public class DockerComposeRunnerTest {
             runner = new DockerComposeRunner(file);
             Map<String, Service> services = runner.start(true);
             Service jGroupService = services.get("jgroup-with-uid");
-
-            WaitFor.portOpen("jgroup-with-uid", PORT).process(services);
             assertThat(jGroupService).isNotNull();
-            String containerId = jGroupService.getId();
-            // Get user id in machine
+            WaitFor.portOpen("jgroup-with-uid", PORT).process(services);
 
+            // Get user id in machine
             ProcessExecutor executor = new ProcessExecutor("id", "-u");
             String expectedUserId = executor.readOutput(true).execute().outputString().trim();
-            // Get user id inside the container
 
+            // Get user id inside the container
+            String containerId = jGroupService.getId();
             executor = new ProcessExecutor("docker", "exec", containerId, "id", "-u");
             String containerUserId = executor.readOutput(true).execute().outputString().trim();
             Assert.assertEquals(expectedUserId, containerUserId);
         } finally {
-            if(runner != null) {
+            if (runner != null) {
                 runner.down();
             }
         }
@@ -106,12 +104,10 @@ public class DockerComposeRunnerTest {
 
     private String getContainerInfo(Service container, String name) throws Exception {
         return new ProcessExecutor()
-                .command("docker", "inspect",  String.format("--format={{.%s}}", name), container.getId())
+                .command("docker", "inspect", String.format("--format={{.%s}}", name), container.getId())
                 .readOutput(true)
                 .execute()
                 .outputString()
                 .trim();
-
     }
-
 }
