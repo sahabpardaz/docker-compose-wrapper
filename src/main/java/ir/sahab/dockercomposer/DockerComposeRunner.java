@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.Validate;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeroturnaround.exec.InvalidExitValueException;
@@ -109,14 +108,17 @@ public class DockerComposeRunner {
     private Service createService(String name) {
         List<String> serviceStateLines = executeDockerCompose("ps", name).getOutput().getLines();
 
-        if (serviceStateLines.size() != 3) {
+        if (serviceStateLines.size() < 3) {
             throw new IllegalStateException("Unexpected output of docker-compose ps for service " + name
                     + ". This is mostly due to your container is terminated early.");
         }
 
-        // The third line is the state of docker service
-        String serviceState = serviceStateLines.get(2);
-        return parseServiceState(serviceState, name);
+        // The third line plus following lines are the state of docker service
+        StringBuilder serviceState = new StringBuilder();
+        for (int i = 2; i < serviceStateLines.size(); i++) {
+            serviceState.append(serviceStateLines.get(i).trim());
+        }
+        return parseServiceState(serviceState.toString(), name);
     }
 
     /**
@@ -247,14 +249,5 @@ public class DockerComposeRunner {
         ProcessResult result = execute("docker", "inspect", "-f",
                 "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}", containerId);
         return result.outputString().trim();
-    }
-
-    @Override
-    public String toString() {
-        return new ToStringBuilder(this)
-                .append("composeFile", composeFile)
-                .append("projectName", projectName)
-                .append("environment", environment)
-                .toString();
     }
 }

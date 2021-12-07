@@ -45,16 +45,15 @@ public class DockerComposeRunnerTest {
             runner = new DockerComposeRunner(file);
             Map<String, Service> services = runner.start(true);
             Service jGroupService = services.get("jgroup-with-uid");
-
-            WaitFor.portOpen("jgroup-with-uid", PORT).process(services);
             assertThat(jGroupService).isNotNull();
-            String containerId = jGroupService.getId();
-            // Get user id in machine
+            WaitFor.portOpen("jgroup-with-uid", PORT).process(services);
 
+            // Get user id in machine
             ProcessExecutor executor = new ProcessExecutor("id", "-u");
             String expectedUserId = executor.readOutput(true).execute().outputString().trim();
-            // Get user id inside the container
 
+            // Get user id inside the container
+            String containerId = jGroupService.getId();
             executor = new ProcessExecutor("docker", "exec", containerId, "id", "-u");
             String containerUserId = executor.readOutput(true).execute().outputString().trim();
             Assert.assertEquals(expectedUserId, containerUserId);
@@ -110,6 +109,5 @@ public class DockerComposeRunnerTest {
                 .execute()
                 .outputString()
                 .trim();
-
     }
 }

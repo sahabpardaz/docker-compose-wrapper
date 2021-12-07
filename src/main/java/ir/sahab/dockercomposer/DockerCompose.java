@@ -40,9 +40,9 @@ public class DockerCompose extends ExternalResource {
         DockerComposeRunner.checkEnvironment();
         // Run the specs one-by-one and collect the services from each spec.
         for (DockerComposeSpec spec : specs) {
-            logger.info("Starting docker-compose spec: {}", spec);
+            logger.info("Starting docker-compose with spec: {}", spec);
             Map<String, Service> services = spec.runner.start(spec.forceRecreate);
-            logger.info("Services information for spec file {} is: {}", spec.file, services);
+            logger.info("A docker-compose with spec {} started. Started services are: {} ", spec, services);
             // Two services with the same name can exist in these files but docker-compose only run one of them so we
             // give a light warning here.
             services.keySet().stream()
@@ -68,10 +68,10 @@ public class DockerCompose extends ExternalResource {
             if (spec.forceDown) {
                 try {
                     spec.runner.down();
-                    logger.info("Docker-compose spec for file {} stopped!", spec.file.getFileName());
+                    logger.info("A docker-compose with spec {} stopped.", spec);
                 } catch (Exception e) {
                     // We don't care
-                    logger.warn("Unable to stop docker-compose spec: {}", spec);
+                    logger.warn("Unable to stop docker-compose with spec: {}", spec);
                 }
             }
         }
@@ -127,11 +127,9 @@ public class DockerCompose extends ExternalResource {
         public String toString() {
             return new ToStringBuilder(this)
                     .append("file", file)
-                    .append("projectName", projectName)
                     .append("forceRecreate", forceRecreate)
                     .append("forceDown", forceDown)
                     .append("startupCallbacks", startupCallbacks)
-                    .append("runner", runner)
                     .append("environment", environment)
                     .toString();
         }

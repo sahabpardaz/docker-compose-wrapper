@@ -1,31 +1,29 @@
 package ir.sahab.dockercomposer;
 
+import static java.util.Collections.singletonList;
+
 import com.google.common.net.InetAddresses;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
-import java.util.List;
-import org.apache.commons.lang3.reflect.FieldUtils;
 
 /**
  * This class provides a utility to add (Hostname,IP) mappings to existing java DNS resolution mechanism.
  */
 public class NameServiceEditor {
 
-    private static final String NAME_SERVICE_INTERFACE = "sun.net.spi.nameservice.NameService";
-
     private NameServiceEditor() {
     }
 
     /**
-     * Modified Java's name-service resolution by invoking "nameServices", (the private static field in class {@link
-     * InetAddress} and adding a custom NameService of type {@link FixedHostNameService} to that. The new NameService
-     * will hold mapping of the given hostname and IP. By adding this NameService to first position (position 0) of
-     * "nameServices" list, the new mapping will be preferred to other existing mappings with same hostname. We create a
+     * Modifies Java's name-service resolution by invoking "nameServices" or "nameService" based on Java version (the
+     * private static field in class {@link InetAddress} and adding a custom NameService of type {@link
+     * FixedHostNameService} to that. The new NameService will hold mapping of the given hostname and IP. We create a
      * dynamic proxy of {@link sun.net.spi.nameservice.NameService} instead of defining a class implementing this
      * interface to avoid compiler warning for using internal proprietary API. It's not a good workaround but it is the
      * simplest solution we found at the moment.
@@ -34,18 +32,30 @@ public class NameServiceEditor {
      * @param ip IP String of the given mapping.
      */
     public static void addHostnameToNameService(String hostname, String ip)
-            throws IllegalAccessException, IOException, ClassNotFoundException {
-
-        @SuppressWarnings("unchecked")
-        List<Object> nameServices =
-                (List<Object>) FieldUtils.readStaticField(InetAddress.class, "nameServices", true);
-
-        Class<?> nameServiceClass = Class.forName(NAME_SERVICE_INTERFACE);
-        Object nameService = Proxy.newProxyInstance(
-                Thread.currentThread().getContextClassLoader(),
-                new Class<?>[] {nameServiceClass}, new FixedHostNameService(hostname, ip));
-        // Note: adding to index zero makes this NameService's priority higher than existing ones.
-        nameServices.add(0, nameService);
+            throws IllegalAccessException, IOException, ClassNotFoundException, NoSuchFieldException {
+        String nameServiceInterface;
+        Object nameServiceProxy;
+        String nameServiceFieldName;
+        Field nameServiceField;
+        try {
+            // Newer versions of Java(> 1.8) uses java.net.InetAddress$nameService field.
+            nameServiceInterface = "java.net.InetAddress$NameService";
+            nameServiceFieldName = "nameService";
+            final Class<?> nameService = Class.forName(nameServiceInterface);
+            nameServiceField = InetAddress.class.getDeclaredField(nameServiceFieldName);
+            nameServiceProxy = Proxy.newProxyInstance(nameService.getClassLoader(), new Class<?>[] {nameService},
+                    new FixedHostNameService(hostname, ip));
+        } catch (final ClassNotFoundException | NoSuchFieldException e) {
+            // Old versions of Java (<= 1.8) uses java.net.InetAddress$nameServices field.
+            nameServiceInterface = "sun.net.spi.nameservice.NameService";
+            nameServiceFieldName = "nameServices";
+            nameServiceField = InetAddress.class.getDeclaredField(nameServiceFieldName);
+            final Class<?> nameService = Class.forName(nameServiceInterface);
+            nameServiceProxy = singletonList(Proxy.newProxyInstance(nameService.getClassLoader(),
+                    new Class<?>[] {nameService}, new FixedHostNameService(hostname, ip)));
+        }
+        nameServiceField.setAccessible(true);
+        nameServiceField.set(InetAddress.class, nameServiceProxy);
     }
 
     /**
@@ -79,7 +89,7 @@ public class NameServiceEditor {
          */
         private InetAddress[] lookupAllHostAddr(String paramString) throws UnknownHostException {
             if (address.getHostName().equals(paramString)) {
-                return new InetAddress[] { address };
+                return new InetAddress[] {address};
             } else {
                 throw new UnknownHostException();
             }
