@@ -38,14 +38,6 @@ public class NameServiceEditor {
         String nameServiceFieldName;
         Field nameServiceField;
         try {
-            // Newer versions of Java(> 1.8) uses java.net.InetAddress$nameService field.
-            nameServiceInterface = "java.net.InetAddress$NameService";
-            nameServiceFieldName = "nameService";
-            final Class<?> nameService = Class.forName(nameServiceInterface);
-            nameServiceField = InetAddress.class.getDeclaredField(nameServiceFieldName);
-            nameServiceProxy = Proxy.newProxyInstance(nameService.getClassLoader(), new Class<?>[] {nameService},
-                    new FixedHostNameService(hostname, ip));
-        } catch (final ClassNotFoundException | NoSuchFieldException e) {
             // Old versions of Java (<= 1.8) uses java.net.InetAddress$nameServices field.
             nameServiceInterface = "sun.net.spi.nameservice.NameService";
             nameServiceFieldName = "nameServices";
@@ -53,6 +45,14 @@ public class NameServiceEditor {
             final Class<?> nameService = Class.forName(nameServiceInterface);
             nameServiceProxy = singletonList(Proxy.newProxyInstance(nameService.getClassLoader(),
                     new Class<?>[] {nameService}, new FixedHostNameService(hostname, ip)));
+        } catch (final ClassNotFoundException | NoSuchFieldException e) {
+            // Newer versions of Java(> 1.8) uses java.net.InetAddress$nameService field.
+            nameServiceInterface = "java.net.InetAddress$NameService";
+            nameServiceFieldName = "nameService";
+            final Class<?> nameService = Class.forName(nameServiceInterface);
+            nameServiceField = InetAddress.class.getDeclaredField(nameServiceFieldName);
+            nameServiceProxy = Proxy.newProxyInstance(nameService.getClassLoader(), new Class<?>[] {nameService},
+                    new FixedHostNameService(hostname, ip));
         }
         nameServiceField.setAccessible(true);
         nameServiceField.set(InetAddress.class, nameServiceProxy);
