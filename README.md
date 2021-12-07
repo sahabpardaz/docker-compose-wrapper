@@ -1,6 +1,6 @@
 ﻿Docker-Compose Test Utility
 ===========================
-[![Build Status](https://travis-ci.org/sahabpardaz/docker-compose-wrapper.svg?branch=master)](https://travis-ci.org/sahabpardaz/docker-compose-wrapper)
+[![Tests](https://github.com/sahabpardaz/docker-compose-wrapper/actions/workflows/maven.yml/badge.svg?branch=main)](https://github.com/sahabpardaz/docker-compose-wrapper/actions/workflows/maven.yml)
 
 ### Introduction
 
