@@ -1,7 +1,5 @@
 package ir.sahab.dockercomposer;
 
-import static java.util.Collections.singletonList;
-
 import com.google.common.net.InetAddresses;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -11,6 +9,8 @@ import java.lang.reflect.Proxy;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.List;
+import org.apache.commons.lang3.reflect.FieldUtils;
 
 /**
  * This class provides a utility to add (Hostname,IP) mappings to existing java DNS resolution mechanism.
@@ -41,21 +41,26 @@ public class NameServiceEditor {
             // Old versions of Java (<= 1.8) uses java.net.InetAddress$nameServices field.
             nameServiceInterface = "sun.net.spi.nameservice.NameService";
             nameServiceFieldName = "nameServices";
-            nameServiceField = InetAddress.class.getDeclaredField(nameServiceFieldName);
             final Class<?> nameService = Class.forName(nameServiceInterface);
-            nameServiceProxy = singletonList(Proxy.newProxyInstance(nameService.getClassLoader(),
-                    new Class<?>[] {nameService}, new FixedHostNameService(hostname, ip)));
-        } catch (final ClassNotFoundException | NoSuchFieldException e) {
+            @SuppressWarnings("unchecked")
+            List<Object> nameServices =
+                    (List<Object>) FieldUtils.readStaticField(InetAddress.class, nameServiceFieldName, true);
+            nameServiceProxy = Proxy.newProxyInstance(nameService.getClassLoader(),
+                    new Class<?>[] {nameService}, new FixedHostNameService(hostname, ip));
+            // Note: adding to index zero makes this NameService's priority higher than existing ones.
+            nameServices.add(0, nameServiceProxy);
+        } catch (final ClassNotFoundException e) {
             // Newer versions of Java(> 1.8) uses java.net.InetAddress$nameService field.
             nameServiceInterface = "java.net.InetAddress$NameService";
             nameServiceFieldName = "nameService";
             final Class<?> nameService = Class.forName(nameServiceInterface);
             nameServiceField = InetAddress.class.getDeclaredField(nameServiceFieldName);
+            Object parentNameService = FieldUtils.readStaticField(InetAddress.class, nameServiceFieldName, true);
             nameServiceProxy = Proxy.newProxyInstance(nameService.getClassLoader(), new Class<?>[] {nameService},
-                    new FixedHostNameService(hostname, ip));
+                    new FixedHostNameService(hostname, ip, parentNameService));
+            nameServiceField.setAccessible(true);
+            nameServiceField.set(InetAddress.class, nameServiceProxy);
         }
-        nameServiceField.setAccessible(true);
-        nameServiceField.set(InetAddress.class, nameServiceProxy);
     }
 
     /**
@@ -65,22 +70,37 @@ public class NameServiceEditor {
     public static class FixedHostNameService implements InvocationHandler {
 
         private final InetAddress address;
+        private final Object parentNameService;
 
         FixedHostNameService(String host, String ip) throws UnknownHostException {
             final InetAddress ipAddress = InetAddresses.forString(ip);
             this.address = InetAddress.getByAddress(host, ipAddress.getAddress());
+            this.parentNameService = null;
+        }
+
+        FixedHostNameService(String host, String ip, Object proxyNameService) throws UnknownHostException {
+            final InetAddress ipAddress = InetAddresses.forString(ip);
+            this.address = InetAddress.getByAddress(host, ipAddress.getAddress());
+            this.parentNameService = proxyNameService;
         }
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            switch (method.getName()) {
-                case "lookupAllHostAddr":
-                    return lookupAllHostAddr((String) args[0]);
-                case "getHostByAddr":
-                    return getHostByAddr((byte[]) args[0]);
-                default:
-                    throw new UnsupportedOperationException(
-                            "Method " + method + " is not supported");
+            try {
+                switch (method.getName()) {
+                    case "lookupAllHostAddr":
+                        return lookupAllHostAddr((String) args[0]);
+                    case "getHostByAddr":
+                        return getHostByAddr((byte[]) args[0]);
+                    default:
+                        throw new UnsupportedOperationException("Method " + method + " is not supported");
+                }
+            } catch (UnknownHostException ex) {
+                if (parentNameService != null) {
+                    Method calledMethod = parentNameService.getClass().getDeclaredMethod(method.getName());
+                    return calledMethod.invoke(parentNameService, args);
+                }
+                throw ex;
             }
         }
 
