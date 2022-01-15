@@ -135,6 +135,16 @@ public class DockerComposeRunner {
             throw new IllegalArgumentException("Invalid service info: " + serviceInfo);
         }
 
+        // Extract container's internal IP and add service name to internal IP resolution into Java DNS.
+        String id = serviceInfoParts[0];
+        String internalIp;
+        try {
+            internalIp = getContainerIp(id);
+            NameServiceEditor.addHostnameToNameService(serviceName, internalIp);
+        } catch (Exception e) {
+            throw new IllegalStateException("Could not set mapping of service name and internal IP", e);
+        }
+
         // Extract port mapping if defined fot the container
         Map<Integer, Integer> portMappings = new HashMap<>();
         if (serviceInfoParts.length == 2) {
@@ -146,16 +156,6 @@ public class DockerComposeRunner {
                 int inPort = Integer.parseInt(matcher.group(internalPort));
                 portMappings.put(inPort, exPort);
             }
-        }
-
-        // Extract container's internal IP and add service name to internal IP resolution into Java DNS.
-        String id = serviceInfoParts[0];
-        String internalIp;
-        try {
-            internalIp = getContainerIp(id);
-            NameServiceEditor.addHostnameToNameService(serviceName, internalIp);
-        } catch (Exception e) {
-            throw new IllegalStateException("Could not set mapping of service name and internal IP", e);
         }
 
         return new Service(id, serviceName, externalIp, internalIp, portMappings, this);
