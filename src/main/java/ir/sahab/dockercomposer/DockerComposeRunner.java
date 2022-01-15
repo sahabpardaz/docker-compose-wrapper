@@ -131,19 +131,21 @@ public class DockerComposeRunner {
         final String externalIp = "127.0.0.1";
 
         String[] serviceInfoParts = serviceInfo.split("#");
-        if (serviceInfoParts.length != 2) {
+        if (serviceInfoParts.length < 1) {
             throw new IllegalArgumentException("Invalid service info: " + serviceInfo);
         }
 
-        // Extract port mapping
+        // Extract port mapping if defined fot the container
         Map<Integer, Integer> portMappings = new HashMap<>();
-        Matcher matcher = portPattern.matcher(serviceInfoParts[1]);
-        // Each match will be a mapping from some internal port to some external port.
-        // The first published port will be considered as the default port.
-        while (matcher.find()) {
-            int exPort = Integer.parseInt(matcher.group(externalPort));
-            int inPort = Integer.parseInt(matcher.group(internalPort));
-            portMappings.put(inPort, exPort);
+        if (serviceInfoParts.length == 2) {
+            Matcher matcher = portPattern.matcher(serviceInfoParts[1]);
+            // Each match will be a mapping from some internal port to some external port.
+            // The first published port will be considered as the default port.
+            while (matcher.find()) {
+                int exPort = Integer.parseInt(matcher.group(externalPort));
+                int inPort = Integer.parseInt(matcher.group(internalPort));
+                portMappings.put(inPort, exPort);
+            }
         }
 
         // Extract container's internal IP and add service name to internal IP resolution into Java DNS.
@@ -241,8 +243,8 @@ public class DockerComposeRunner {
     /**
      * Gets container IP using "{@code docker inspect}" command and container name.
      *
-     * @return The IP can be found in the JSON output of "docker inspect" command expected to be in node
-     *      {{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}
+     * @return The IP can be found in the JSON output of "docker inspect" command expected to be in node {{range
+     * .NetworkSettings.Networks}}{{.IPAddress}}{{end}}
      */
     private String getContainerIp(String containerId) {
         ProcessResult result = execute("docker", "inspect", "-f",
