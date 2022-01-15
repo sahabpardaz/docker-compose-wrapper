@@ -106,55 +106,57 @@ public class DockerComposeRunner {
         executeDockerCompose("stop", serviceName);
     }
 
-    private Service createService(String name) {
-        String serviceInfo = getContainerInfo(name, projectName);
+    private Service createService(String serviceName) {
+        String serviceInfo = getContainerNameAndPorts(serviceName, projectName);
         if (StringUtils.isEmpty(serviceInfo)) {
-            throw new IllegalStateException("Unexpected output of docker ps for service " + name
+            throw new IllegalStateException("Unexpected output of docker ps for service " + serviceName
                     + ". This is mostly due to your container is terminated early.");
         }
 
-        return parseServiceInfo(serviceInfo, name);
+        return createService(serviceInfo, serviceName);
     }
 
     /**
-     * Parses the docker-compose service state line and creates a service from the parsed result.
+     * Parses the 'docker ps' state line and creates a service from the parsed result.
      */
-    // We might later convert this to an strategy based on docker-compose version
-    private Service parseServiceInfo(String serviceInfo, String name) {
+    private Service createService(String serviceInfo, String serviceName) {
         /* Service info is like this:
          * zookeeper-test-1#2888/tcp, 3888/tcp, 0.0.0.0:32768->2181/tcp
          * We want to extract these: zookeeper-test-1 as id and 2181 as the default port which
          * is mapped to port 32768. The service externalIp is 0.0.0.0 which means local host.
          */
-        final Pattern portPattern
-                = Pattern.compile("((\\d+).(\\d+).(\\d+).(\\d+)):(\\d+)->(\\d+)/tcp");
+        final Pattern portPattern = Pattern.compile("((\\d+).(\\d+).(\\d+).(\\d+)):(\\d+)->(\\d+)/tcp");
         final int externalPort = 6;
         final int internalPort = 7;
         final String externalIp = "127.0.0.1";
 
         String[] serviceInfoParts = serviceInfo.split("#");
-        String id = serviceInfoParts[0];
-
-        Map<Integer, Integer> portMappings = new HashMap<>();
-        if (serviceInfoParts.length == 2) {
-            Matcher matcher = portPattern.matcher(serviceInfoParts[1]);
-            // Each match will be a mapping from some internal port to some external port.
-            // The first published port will be considered as the default port.
-            while (matcher.find()) {
-                int exPort = Integer.parseInt(matcher.group(externalPort));
-                int inPort = Integer.parseInt(matcher.group(internalPort));
-                portMappings.put(inPort, exPort);
-            }
+        if (serviceInfoParts.length != 2) {
+            throw new IllegalArgumentException("Invalid service info: " + serviceInfo);
         }
+
+        // Extract port mapping
+        Map<Integer, Integer> portMappings = new HashMap<>();
+        Matcher matcher = portPattern.matcher(serviceInfoParts[1]);
+        // Each match will be a mapping from some internal port to some external port.
+        // The first published port will be considered as the default port.
+        while (matcher.find()) {
+            int exPort = Integer.parseInt(matcher.group(externalPort));
+            int inPort = Integer.parseInt(matcher.group(internalPort));
+            portMappings.put(inPort, exPort);
+        }
+
+        // Extract container's internal IP and add service name to internal IP resolution into Java DNS.
+        String id = serviceInfoParts[0];
         String internalIp;
         try {
             internalIp = getContainerIp(id);
-            NameServiceEditor.addHostnameToNameService(name, internalIp);
+            NameServiceEditor.addHostnameToNameService(serviceName, internalIp);
         } catch (Exception e) {
             throw new IllegalStateException("Could not set mapping of service name and internal IP", e);
         }
 
-        return new Service(id, name, externalIp, internalIp, portMappings, this);
+        return new Service(id, serviceName, externalIp, internalIp, portMappings, this);
     }
 
     /**
@@ -252,7 +254,7 @@ public class DockerComposeRunner {
      * Returns container info by using "{@code docker ps}" command. The output format is
      * CONTAINER_NAME#CONTAINER_PORTS.
      */
-    private String getContainerInfo(String serviceName, String projectName) {
+    private String getContainerNameAndPorts(String serviceName, String projectName) {
         List<String> dockerCommands = new ArrayList<>();
         dockerCommands.add("docker");
         dockerCommands.add("ps");
