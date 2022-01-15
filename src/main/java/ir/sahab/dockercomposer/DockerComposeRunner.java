@@ -131,7 +131,7 @@ public class DockerComposeRunner {
         final String externalIp = "127.0.0.1";
 
         String[] serviceInfoParts = serviceInfo.split("#");
-        if (serviceInfoParts.length < 1) {
+        if (serviceInfoParts.length < 1 || serviceInfoParts.length > 2) {
             throw new IllegalArgumentException("Invalid service info: " + serviceInfo);
         }
 
