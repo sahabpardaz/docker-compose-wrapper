@@ -145,7 +145,7 @@ public class DockerComposeRunner {
             throw new IllegalStateException("Could not set mapping of service name and internal IP", e);
         }
 
-        // Extract port mapping if defined fot the container
+        // Extract port mapping if defined for the container
         Map<Integer, Integer> portMappings = new HashMap<>();
         if (serviceInfoParts.length == 2) {
             Matcher matcher = portPattern.matcher(serviceInfoParts[1]);
